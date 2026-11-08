@@ -1,0 +1,7 @@
+# 원본 데이터 (라이선스 확인 전이라 제외)
+hotel_bookings.csv
+
+# 파이썬, 노트북 부산물
+__pycache__/
+.ipynb_checkpoints/
+catboost_info/
