@@ -6,8 +6,6 @@
 
 데이터 출처: Antonio, N., de Almeida, A., & Nunes, L. (2019). Hotel booking demand datasets. *Data in Brief*, 22, 41-49.
 
----
-
 ## 프로젝트 흐름
 
 ```
@@ -27,8 +25,6 @@
 ```
 
 한 줄 요약: **취소 분석에서 나온 "이미 취소된 예약은 빼고 센다"는 입력 정의가, 어떤 모델 개선보다 수요·매출 예측을 크게 개선했습니다.**
-
----
 
 ## 핵심 요약
 
@@ -67,8 +63,6 @@
 | WAPE | 절대 오차의 합 ÷ 실제값의 합. 날짜별 비율이 아니라 전체 합으로 계산해 수요가 적은 날에 덜 흔들림 |
 | 바깥 168일 | 3.3장의 중첩 검증에서 선택에 한 번도 쓰이지 않은 마지막 56일 × 3구간 (2017-03-17 ~ 08-31) |
 | 순증 (pickup) | 투숙 7일 전 이후에 더해진 순변화 = 직전 7일 신규 예약 − 그 뒤 취소 |
-
----
 
 ## 1. EDA (Part 1)
 
@@ -120,7 +114,7 @@
 
 ### 1.4 가격대, 룸 유형 탐색 (price_room_eda.py)
 
-> [price_room_eda.py](price_room_eda.py)
+> [price_room_eda.py](scripts/price_room_eda.py)
 
 가격대는 호텔별 adr 3분위(City 경계 88, 116 / Resort 60, 104)이고, 계절 효과를 분리하려고 **같은 달 안에서의 상대 가격대**도 함께 봤습니다(유효 가격 예약만).
 
@@ -137,8 +131,6 @@
 - 성수기(7~8월) Resort는 고가대 취소율이 0.341로 가장 높고, 비수기(11~2월)는 고가대가 0.171로 낮아 **가격과 취소의 관계가 계절에 따라 뒤집히는 것처럼 보입니다.** 비수기의 고가대는 건수가 매우 적어 확정하지 못했습니다.
 
 **결론:** 막판 신규 예약의 날짜별 변동을 가격대, 룸 유형으로 설명할 수 있다는 근거는 이 탐색에서 나오지 않았습니다. 이는 부록 D.1에서 평균 adr와 세그먼트 비중을 넣어도 단순 기준을 이기지 못한 결과와 일치합니다. 가격대는 취소 예측에서 호텔별로 다르게 작용하는 신호로만 의미가 있고, 이미 모델에 들어 있습니다.
-
----
 
 ## 2. 취소 예측과 대응 효과 (Part 2, 2-1)
 
@@ -180,7 +172,7 @@
 
 ### 2.2 편향 점검: 포르투갈 (country_bias_check.py)
 
-> [country_bias_check.py](country_bias_check.py), [cancel_country_check.csv](cancel_country_check.csv)
+> [country_bias_check.py](scripts/country_bias_check.py), [cancel_country_check.csv](results/cancel_country_check.csv)
 
 | 점검 | 포르투갈 | 그 외 | 전체 |
 |---|---|---|---|
@@ -197,7 +189,7 @@
 
 ### 2.3 모델 개선 실험: 포화 상태 (cancel_improve.py)
 
-> [cancel_improve.py](cancel_improve.py), [cancel_improve_results.csv](cancel_improve_results.csv), [cancel_calibration_results.csv](cancel_calibration_results.csv)
+> [cancel_improve.py](scripts/cancel_improve.py), [cancel_improve_results.csv](results/cancel_improve_results.csv), [cancel_calibration_results.csv](results/cancel_calibration_results.csv)
 
 LightGBM은 시드 3개 평균입니다. "시간순 TE"는 agent(와 country)의 취소율을 **예약 시점 이전에 결과가 확정된 예약**(취소일 또는 퇴실일이 예약일보다 앞선 것)만으로 시간순 누적 계산한 것입니다.
 
@@ -214,9 +206,9 @@ LightGBM은 시드 3개 평균입니다. "시간순 TE"는 agent(와 country)의
 
 ### 2.4 취소 대응의 비즈니스 효과 (Part 2-1)
 
-> [business_impact.png](business_impact.png), [cancel_threshold_table.csv](cancel_threshold_table.csv), [cancel_sensitivity.csv](cancel_sensitivity.csv), [cancel_nonrefund_check.csv](cancel_nonrefund_check.csv), [country_impact_check.py](country_impact_check.py), [cancel_country_impact.csv](cancel_country_impact.csv)
+> [business_impact.png](results/business_impact.png), [cancel_threshold_table.csv](results/cancel_threshold_table.csv), [cancel_sensitivity.csv](results/cancel_sensitivity.csv), [cancel_nonrefund_check.csv](results/cancel_nonrefund_check.csv), [country_impact_check.py](scripts/country_impact_check.py), [cancel_country_impact.csv](results/cancel_country_impact.csv)
 
-![business impact](business_impact.png)
+![business impact](results/business_impact.png)
 
 **질문:** 취소 위험이 높은 예약에 먼저 대응하면 얼마나 이득인가?
 
@@ -263,11 +255,9 @@ LightGBM은 시드 3개 평균입니다. "시간순 TE"는 agent(와 country)의
 - 이 표의 기준 숫자(338K, 353K)가 위쪽의 348K, 347K와 다른 것은 `cancel_improve.py`가 시드 3개 평균 모델을 쓰기 때문입니다. Part 2-1의 348K와 모델 설정이 약간 달라 값이 다르며, 같은 표 안의 비교만 의미가 있습니다.
 - 주의: 결과를 본 뒤 시도한 사후 분석이고, 같은 test 기간에서만 확인했으며, 성공률과 비용 가정에 그대로 의존합니다.
 
----
-
 ## 3. 수요와 매출 예측 (Part 3, 3-1, 4, 4-1, 5)
 
-> [Part3_demand_forecast.ipynb](Part3_demand_forecast.ipynb), [Part3_1_demand_with_eda_features.ipynb](Part3_1_demand_with_eda_features.ipynb), [Part4_revenue_forecast.ipynb](Part4_revenue_forecast.ipynb), [Part4_1_revenue_nested.ipynb](Part4_1_revenue_nested.ipynb), [asof_nested.py](asof_nested.py), [asof_report.py](asof_report.py)
+> [Part3_demand_forecast.ipynb](Part3_demand_forecast.ipynb), [Part3_1_demand_with_eda_features.ipynb](Part3_1_demand_with_eda_features.ipynb), [Part4_revenue_forecast.ipynb](Part4_revenue_forecast.ipynb), [Part4_1_revenue_nested.ipynb](Part4_1_revenue_nested.ipynb), [asof_nested.py](scripts/asof_nested.py), [asof_report.py](scripts/asof_report.py)
 
 **타깃:** 호텔별, 일별 **순수요(취소 제외 투숙 수)** 와 **매출(취소 제외 예약의 adr × 숙박일수, 투숙 시작일 귀속, 유효 가격만)**. 평가 지표는 MAPE, WAPE, 편향입니다.
 
@@ -364,7 +354,7 @@ OTB만과 OTB+exp의 차이는 −0.001~+0.002로 네 과제 모두 구분되지
 
 ### 3.5 예측 시점 민감도 (horizon_sensitivity.py)
 
-> [horizon_sensitivity.py](horizon_sensitivity.py), [horizon_demand_results.csv](horizon_demand_results.csv), [horizon_revenue_results.csv](horizon_revenue_results.csv)
+> [horizon_sensitivity.py](scripts/horizon_sensitivity.py), [horizon_demand_results.csv](results/horizon_demand_results.csv), [horizon_revenue_results.csv](results/horizon_revenue_results.csv)
 
 7일은 가정이었으므로 H = 1, 3, 7, 14, 28일로 바꿔 비교했습니다. 15개 모델의 중첩 선택을 시점마다 돌리면 시점당 1시간 이상 걸려 **모델 설정을 고정한 간소 설계**(계절 naive, Ridge, LightGBM, SARIMAX[OTB만])로 했습니다. 3.4의 최종 수치와 직접 비교하지 마세요(H=7 값은 City 수요 Ridge 0.061 대 0.062로 거의 같아 간소화의 영향은 작아 보입니다).
 
@@ -383,7 +373,7 @@ OTB만과 OTB+exp의 차이는 −0.001~+0.002로 네 과제 모두 구분되지
 
 ### 3.6 오차 분해, 단순 기준, 예측 구간 (interval_decomp.py)
 
-> [interval_decomp.py](interval_decomp.py), [interval_coverage.csv](interval_coverage.csv), [demand_decomposition.csv](demand_decomposition.csv)
+> [interval_decomp.py](scripts/interval_decomp.py), [interval_coverage.csv](results/interval_coverage.csv), [demand_decomposition.csv](results/demand_decomposition.csv)
 
 투숙일 t의 순수요를 예측 시점(t−7)에 알려진 부분과 모르는 부분으로 정확히 분해했습니다: `y = A − C + B`
 
@@ -426,8 +416,6 @@ OTB만과 OTB+exp의 차이는 −0.001~+0.002로 네 과제 모두 구분되지
 2. 개선의 원천은 **OTB를 운영 시점 정의로 바로잡은 것**입니다(오차 30~55% 감소). 모델 선택, 취소 확률 피처, 추가 모델, 순증 타깃, 막판 피처, LightGBM 설계 개선(부록 D.2)은 단순 기준 이상의 이득을 만들지 못했습니다.
 3. 예측 시점이 멀어질수록 오차가 일정하게 늘어납니다. 7일 전은 합리적인 중간 지점이고 City는 14일 전까지도 8% 안팎입니다.
 4. 취소 분석이 수요, 매출 예측에 준 가장 큰 기여는 취소 확률 피처가 아니라 **"이미 취소된 예약은 OTB에서 뺀다"는 입력 정의**입니다.
-
----
 
 ## 4. 정정 이력과 한계
 
@@ -476,8 +464,6 @@ OTB만과 OTB+exp의 차이는 −0.001~+0.002로 네 과제 모두 구분되지
 3. 실제 운영 데이터로 `c`, `s` 추정(파일럿 실험)
 4. 겨울을 포함한 검증
 
----
-
 ## 부록
 
 ### A. 파일 구성
@@ -485,37 +471,38 @@ OTB만과 OTB+exp의 차이는 −0.001~+0.002로 네 과제 모두 구분되지
 | 파일 | 내용 |
 |---|---|
 | [EDA.ipynb](EDA.ipynb) | Part 1. 기본 EDA, 취소 예측용 EDA, 수요 예측용 EDA |
-| [price_room_eda.py](price_room_eda.py) | 1.4. 가격대, 룸 유형별 취소율과 막판 예약 비중, Resort 계절별 가격대 구성 |
+| [price_room_eda.py](scripts/price_room_eda.py) | 1.4. 가격대, 룸 유형별 취소율과 막판 예약 비중, Resort 계절별 가격대 구성 |
 | [Part2_cancel_prediction.ipynb](Part2_cancel_prediction.ipynb) | Part 2. 취소 예측 |
 | [Part2_1_cancel_business_impact.ipynb](Part2_1_cancel_business_impact.ipynb) | Part 2-1. 취소 대응 효과 (임계값, 비용, 성공률 민감도, Non Refund 점검) |
-| [country_bias_check.py](country_bias_check.py) | 포르투갈 편향 점검 (집단별 AUC, country 제외, 집단 이전, SHAP, 보정) |
-| [cancel_improve.py](cancel_improve.py) | 시간순 타깃 인코딩, 추가 피처, CatBoost, 확률 보정, 기대값 규칙 |
-| [country_impact_check.py](country_impact_check.py) | 취소 대응 효과의 포르투갈 의존도, valid 임계값 점검 |
+| [country_bias_check.py](scripts/country_bias_check.py) | 포르투갈 편향 점검 (집단별 AUC, country 제외, 집단 이전, SHAP, 보정) |
+| [cancel_improve.py](scripts/cancel_improve.py) | 시간순 타깃 인코딩, 추가 피처, CatBoost, 확률 보정, 기대값 규칙 |
+| [country_impact_check.py](scripts/country_impact_check.py) | 취소 대응 효과의 포르투갈 의존도, valid 임계값 점검 |
 | [Part3_demand_forecast.ipynb](Part3_demand_forecast.ipynb), [Part4_revenue_forecast.ipynb](Part4_revenue_forecast.ipynb) | 베이스라인(단일 분할, 기존 OTB 정의) |
 | [Part3_1_demand_with_eda_features.ipynb](Part3_1_demand_with_eda_features.ipynb), [Part4_1_revenue_nested.ipynb](Part4_1_revenue_nested.ipynb) | 중첩 walk-forward 최초 구현. 기존 OTB 정의라 **수치는 대체됨**. 취소 확률 캐시(`cache_nested/p_cancel.npy`)와 기존 정의 비교 기준을 만들기 위해 유지 |
-| [asof_nested.py](asof_nested.py), [asof_report.py](asof_report.py) | **최종 수치.** 운영 시점 OTB로 수요, 매출을 같은 절차로 재실행하고 모델 6개 추가, 결과 집계 |
-| [horizon_sensitivity.py](horizon_sensitivity.py) | 예측 시점(1, 3, 7, 14, 28일 전) 민감도 (간소 설계) |
-| [interval_decomp.py](interval_decomp.py) | 예측 구간(컨포멀), 수요 분해, 단순 기준 비교 |
-| [pickup_features.py](pickup_features.py) | 순증 타깃, 순증 이력, 장부 구성 피처 실험 |
-| [lgbm_design_experiments.py](lgbm_design_experiments.py) | D.2. LightGBM 피처, 학습 설계 후보 8개와 조합 검증 (사전 지정, 사후 분석) |
+| [asof_nested.py](scripts/asof_nested.py), [asof_report.py](scripts/asof_report.py) | **최종 수치.** 운영 시점 OTB로 수요, 매출을 같은 절차로 재실행하고 모델 6개 추가, 결과 집계 |
+| [horizon_sensitivity.py](scripts/horizon_sensitivity.py) | 예측 시점(1, 3, 7, 14, 28일 전) 민감도 (간소 설계) |
+| [interval_decomp.py](scripts/interval_decomp.py) | 예측 구간(컨포멀), 수요 분해, 단순 기준 비교 |
+| [pickup_features.py](scripts/pickup_features.py) | 순증 타깃, 순증 이력, 장부 구성 피처 실험 |
+| [lgbm_design_experiments.py](scripts/lgbm_design_experiments.py) | D.2. LightGBM 피처, 학습 설계 후보 8개와 조합 검증 (사전 지정, 사후 분석) |
 
 | 결과 파일 | 내용 |
 |---|---|
-| [asof_demand_results.csv](asof_demand_results.csv), [asof_demand_selection.csv](asof_demand_selection.csv), [asof_revenue_results.csv](asof_revenue_results.csv), [asof_revenue_selection.csv](asof_revenue_selection.csv) | 3.4 최종 수치 (모델별 성능, 선택 절차 비교) |
-| [horizon_demand_results.csv](horizon_demand_results.csv), [horizon_revenue_results.csv](horizon_revenue_results.csv) | 3.5 |
-| [interval_coverage.csv](interval_coverage.csv), [demand_decomposition.csv](demand_decomposition.csv), [pickup_results.csv](pickup_results.csv), [lgbm_design_results.csv](lgbm_design_results.csv) | 3.6, D.1, D.2 |
-| [cancel_threshold_table.csv](cancel_threshold_table.csv), [cancel_sensitivity.csv](cancel_sensitivity.csv), [cancel_nonrefund_check.csv](cancel_nonrefund_check.csv), [business_impact.png](business_impact.png) | 2.4 |
-| [cancel_country_check.csv](cancel_country_check.csv), [cancel_country_impact.csv](cancel_country_impact.csv), [cancel_improve_results.csv](cancel_improve_results.csv), [cancel_calibration_results.csv](cancel_calibration_results.csv) | 2.2, 2.3, 2.4 |
+| [asof_demand_results.csv](results/asof_demand_results.csv), [asof_demand_selection.csv](results/asof_demand_selection.csv), [asof_revenue_results.csv](results/asof_revenue_results.csv), [asof_revenue_selection.csv](results/asof_revenue_selection.csv) | 3.4 최종 수치 (모델별 성능, 선택 절차 비교) |
+| [horizon_demand_results.csv](results/horizon_demand_results.csv), [horizon_revenue_results.csv](results/horizon_revenue_results.csv) | 3.5 |
+| [interval_coverage.csv](results/interval_coverage.csv), [demand_decomposition.csv](results/demand_decomposition.csv), [pickup_results.csv](results/pickup_results.csv), [lgbm_design_results.csv](results/lgbm_design_results.csv) | 3.6, D.1, D.2 |
+| [cancel_threshold_table.csv](results/cancel_threshold_table.csv), [cancel_sensitivity.csv](results/cancel_sensitivity.csv), [cancel_nonrefund_check.csv](results/cancel_nonrefund_check.csv), [business_impact.png](results/business_impact.png) | 2.4 |
+| [cancel_country_check.csv](results/cancel_country_check.csv), [cancel_country_impact.csv](results/cancel_country_impact.csv), [cancel_improve_results.csv](results/cancel_improve_results.csv), [cancel_calibration_results.csv](results/cancel_calibration_results.csv) | 2.2, 2.3, 2.4 |
 
 기존 OTB 정의에서 나온 결과 파일(csv, png)과 중간 캐시는 최종 수치로 대체되어 저장소에서 제거했습니다. 해당 수치는 3.4장에 비교용으로 남아 있습니다.
 
 ### B. 실행 환경과 재현
 
 - Python 3.13, pandas, numpy, scikit-learn, LightGBM, statsmodels, holidays, matplotlib. 추가로 XGBoost, CatBoost(`pip install xgboost catboost`).
-- 데이터: `hotel_bookings.csv`를 같은 폴더에 둡니다(저장소에 포함되어 있지 않음).
+- 폴더 구성: 노트북은 루트, 분석 스크립트는 `scripts/`, 결과 csv·png는 `results/`, 중간 캐시는 `cache_*/`입니다. **모든 노트북과 스크립트는 루트 폴더에서 실행**합니다(`python scripts/xxx.py`).
+- 데이터: `hotel_bookings.csv`를 루트 폴더에 둡니다(저장소에 포함되어 있지 않음. Kaggle "Hotel booking demand"에서 받을 수 있음).
 - 순서: `EDA.ipynb` → `Part2_cancel_prediction.ipynb` → `Part2_1_cancel_business_impact.ipynb` → `Part3_1_demand_with_eda_features.ipynb`와 `Part4_1_revenue_nested.ipynb`(취소 확률 캐시 `cache_nested/p_cancel.npy` 생성) → `asof_nested.py` → `asof_report.py`.
-- **최종 수치 재현:** `TARGET=demand` 또는 `revenue`, `OUTER_RUN=0,1,2,3`, `ASOF=1`(운영 시점, 기본) 또는 `0`(기존 정의)을 환경변수로 지정해 `python asof_nested.py`를 실행하고 `python asof_report.py`로 집계합니다. 결과는 `cache_asof_demand/`, `cache_asof_revenue/`에 저장되며 한 (구간, 호텔) 단위가 6~15분 걸립니다. `ASOF=0`으로 실행하면 기존 정의의 결과를 다시 만들 수 있습니다.
-- 나머지 스크립트: `python horizon_sensitivity.py`(TARGET 지정, 약 15분), `python interval_decomp.py`(Part 5 캐시 필요, 수 초), `python pickup_features.py`(약 2분), `python lgbm_design_experiments.py`(수 분), `python country_bias_check.py`(약 1분), `python cancel_improve.py`(약 5분), `python country_impact_check.py`(약 1분).
+- **최종 수치 재현:** `TARGET=demand` 또는 `revenue`, `OUTER_RUN=0,1,2,3`, `ASOF=1`(운영 시점, 기본) 또는 `0`(기존 정의)을 환경변수로 지정해 `python scripts/asof_nested.py`를 실행하고 `python scripts/asof_report.py`로 집계합니다. 결과는 `cache_asof_demand/`, `cache_asof_revenue/`에 저장되며 한 (구간, 호텔) 단위가 6~15분 걸립니다. `ASOF=0`으로 실행하면 기존 정의의 결과를 다시 만들 수 있습니다.
+- 나머지 스크립트: `python scripts/horizon_sensitivity.py`(TARGET 지정, 약 15분), `python scripts/interval_decomp.py`(Part 5 캐시 필요, 수 초), `python scripts/pickup_features.py`(약 2분), `python scripts/lgbm_design_experiments.py`(수 분), `python scripts/country_bias_check.py`(약 1분), `python scripts/cancel_improve.py`(약 5분), `python scripts/country_impact_check.py`(약 1분).
 - 저장소에 남겨 둔 캐시: `cache_nested/p_cancel.npy`, `cache_asof/p_late.npy`(취소 확률 피처), `cache_asof_demand/`, `cache_asof_revenue/`(최종 수치의 중간 결과. `asof_report.py`, `interval_decomp.py`가 읽음). 지우면 해당 단계부터 다시 계산해야 합니다.
 
 ### C. 직무(JD) 연계
@@ -536,7 +523,7 @@ OTB만과 OTB+exp의 차이는 −0.001~+0.002로 네 과제 모두 구분되지
 
 #### D.1 막판 순증 타깃과 피처 (pickup_features.py)
 
-> [pickup_features.py](pickup_features.py), [pickup_results.csv](pickup_results.csv)
+> [pickup_features.py](scripts/pickup_features.py), [pickup_results.csv](results/pickup_results.csv)
 
 모델이 못 맞히는 것이 직전 예약이므로 직접 겨냥했습니다(예측 시점 7일, 바깥 168일, 모델 설정 고정).
 
@@ -557,7 +544,7 @@ OTB만과 OTB+exp의 차이는 −0.001~+0.002로 네 과제 모두 구분되지
 
 #### D.2 LightGBM 피처, 학습 설계 개선 실험 (사후 분석, lgbm_design_experiments.py)
 
-> [lgbm_design_experiments.py](lgbm_design_experiments.py), [lgbm_design_results.csv](lgbm_design_results.csv)
+> [lgbm_design_experiments.py](scripts/lgbm_design_experiments.py), [lgbm_design_results.csv](results/lgbm_design_results.csv)
 
 **목적:** 7일 전 예측에서 LightGBM이 단순 기준과 구분되지 않았으므로, 표본이 적고 맞출 대상에 이미 아는 A가 섞여 있다는 가설 아래 후보를 **사전 지정**해 하나씩 검증했습니다. 사후 분석입니다.
 

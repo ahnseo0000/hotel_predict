@@ -29,32 +29,36 @@ def report(target):
     names9 = [lgb0 if n is None else n for n in ORIG9]
     mape = (lambda y, p: np.mean(np.abs(y - p) / np.maximum(y, 1))) if rev else (lambda y, p: np.mean(np.abs(y - p) / y))
     wape = lambda y, p: np.abs(y - p).sum() / y.sum()
-    L = {(k, h): pickle.load(open(f'{legacy_dir}/outer{k}_{h}.pkl', 'rb')) for k in range(4) for h in HOTELS}
+    HAS_L = all(os.path.exists(f'{legacy_dir}/outer{k}_{h}.pkl') for k in range(4) for h in HOTELS)  # 기존 정의 캐시가 없으면 비교 생략
+    if not HAS_L: print(f'[{target}] 기존 정의 캐시({legacy_dir}/)가 없어 기존 정의 비교는 생략하고, 결과 csv도 덮어쓰지 않습니다.')
+    L = {(k, h): pickle.load(open(f'{legacy_dir}/outer{k}_{h}.pkl', 'rb')) for k in range(4) for h in HOTELS} if HAS_L else None
     A = {(k, h): pickle.load(open(f'{new_dir}/outer{k}_{h}.pkl', 'rb')) for k in range(4) for h in HOTELS}
     rows, sel_rows, out = [], [], {}
     for h in HOTELS:
         ys = np.concatenate([A[(k, h)]['y_outer'] for k in range(3)])
-        ys_l = np.concatenate([L[(k, h)]['y_outer'] for k in range(3)])
-        assert np.allclose(ys, ys_l), '정답이 달라졌습니다'
+        if HAS_L:
+            ys_l = np.concatenate([L[(k, h)]['y_outer'] for k in range(3)])
+            assert np.allclose(ys, ys_l), '정답이 달라졌습니다'
         fold = np.concatenate([np.full(len(A[(k, h)]['y_outer']), k) for k in range(3)])
         # 기존 정의 예측 (위치로 이름 매핑)
-        leg = {}
-        for i, n in enumerate(names9):
-            leg[n] = np.concatenate([L[(k, h)]['outer_pred'][list(L[(k, h)]['inner_mape'])[i]] for k in range(3)])
-        leg_sel = np.concatenate([L[(k, h)]['outer_pred'][L[(k, h)]['final']] for k in range(3)])
+        leg, leg_sel = {}, None
+        if HAS_L:
+            for i, n in enumerate(names9):
+                leg[n] = np.concatenate([L[(k, h)]['outer_pred'][list(L[(k, h)]['inner_mape'])[i]] for k in range(3)])
+            leg_sel = np.concatenate([L[(k, h)]['outer_pred'][L[(k, h)]['final']] for k in range(3)])
         new = {n: np.concatenate([A[(k, h)]['outer_pred'][n] for k in range(3)]) for n in names9 + EXTRA_MODELS + ABL}
         sel9 = np.concatenate([A[(k, h)]['outer_pred'][A[(k, h)]['final9']] for k in range(3)])
         selall = np.concatenate([A[(k, h)]['outer_pred'][A[(k, h)]['final_all']] for k in range(3)])
         out[h] = dict(ys=ys, leg=leg, leg_sel=leg_sel, new=new, sel9=sel9, selall=selall, fold=fold)
         for n in names9:
-            rows.append({'hotel': h, '모델': n, '구분': '기존9', '기존 정의 MAPE': mape(ys, leg[n]), '운영 시점 MAPE': mape(ys, new[n]),
+            rows.append({'hotel': h, '모델': n, '구분': '기존9', '기존 정의 MAPE': mape(ys, leg[n]) if HAS_L else np.nan, '운영 시점 MAPE': mape(ys, new[n]),
                          '운영 시점 WAPE': wape(ys, new[n]), '운영 시점 편향': float(np.mean(new[n] - ys)),
                          **{f'구간{k+1}': mape(ys[fold == k], new[n][fold == k]) for k in range(3)}})
         for n in EXTRA_MODELS + ABL:
             rows.append({'hotel': h, '모델': n, '구분': '추가' if n in EXTRA_MODELS else '외생변수 ablation', '기존 정의 MAPE': np.nan,
                          '운영 시점 MAPE': mape(ys, new[n]), '운영 시점 WAPE': wape(ys, new[n]), '운영 시점 편향': float(np.mean(new[n] - ys)),
                          **{f'구간{k+1}': mape(ys[fold == k], new[n][fold == k]) for k in range(3)}})
-        for lab, pr in [('선택 절차 A, 기존9 (운영 시점)', sel9), ('선택 절차 A, 전체 모델 (운영 시점)', selall), ('선택 절차 A (기존 정의)', leg_sel)]:
+        for lab, pr in [('선택 절차 A, 기존9 (운영 시점)', sel9), ('선택 절차 A, 전체 모델 (운영 시점)', selall), ('선택 절차 A (기존 정의)', leg_sel)][:3 if HAS_L else 2]:
             sel_rows.append({'hotel': h, '구분': lab, 'MAPE': mape(ys, pr), 'WAPE': wape(ys, pr), '편향': float(np.mean(pr - ys)),
                              **{f'구간{k+1}': mape(ys[fold == k], pr[fold == k]) for k in range(3)}})
     res = pd.DataFrame(rows); sel = pd.DataFrame(sel_rows)
@@ -69,10 +73,11 @@ def report(target):
                            ('선택A(전체모델,운영시점) vs LightGBM(기존 설정)', o['selall'], o['new'][lgb0]),
                            ('선택A(기존9,운영시점) vs 선택A(기존 정의)', o['sel9'], o['leg_sel']),
                            ('선택A(전체모델) vs 선택A(기존9) [운영시점]', o['selall'], o['sel9'])]:
+            if o['leg_sel'] is None and '기존 정의' in lab: continue
             diff = ape(a) - ape(bb); lo, hi, v = verdict(diff)
             print(f'  {lab:<46} {diff.mean():+.4f}  95%CI [{lo:+.4f}, {hi:+.4f}]  {v}')
         print('  선택된 모델 (바깥 구간별) 기존9:', [A[(k, h)]['final9'] for k in range(3)], '| 전체:', [A[(k, h)]['final_all'] for k in range(3)],
-              '| 기존 정의:', [L[(k, h)]['final'] for k in range(3)])
+              *(['| 기존 정의:', [L[(k, h)]['final'] for k in range(3)]] if HAS_L else []))
         print('  배포용(전체 데이터) 선택: 기존9', A[(3, h)]['final9'], '| 전체', A[(3, h)]['final_all'])
         print('  채택된 EDA 그룹:', [A[(k, h)]['groups'] for k in range(4)])
         # 외생변수 ablation 유의성
@@ -80,8 +85,9 @@ def report(target):
         for nm in ABL + ['SARIMAX+OTB(조건부c)']:
             diff = ape(e[nm]) - ape(cur); lo, hi, v = verdict(diff)
             print(f'  {nm:<26} vs SARIMAX+OTB(exp 사용)  {diff.mean():+.4f}  [{lo:+.4f}, {hi:+.4f}]  {v}')
-    res.round(4).to_csv(f'asof_{target}_results.csv', index=False, encoding='utf-8-sig')
-    sel.round(4).to_csv(f'asof_{target}_selection.csv', index=False, encoding='utf-8-sig')
+    if not HAS_L: return
+    res.round(4).to_csv(f'results/asof_{target}_results.csv', index=False, encoding='utf-8-sig')
+    sel.round(4).to_csv(f'results/asof_{target}_selection.csv', index=False, encoding='utf-8-sig')
 
 for t in (sys.argv[1:] or ['demand', 'revenue']):
     report(t)

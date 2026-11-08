@@ -132,7 +132,7 @@ for task, rev in [('수요', False), ('매출', True)]:
         print(f'{task} {hotel} 완료', flush=True)
 
 res = pd.DataFrame(rows)
-res.round(4).to_csv('pickup_results.csv', index=False, encoding='utf-8-sig')
+res.round(4).to_csv('results/pickup_results.csv', index=False, encoding='utf-8-sig')
 pd.set_option('display.width', 250)
 for (task, hotel), g in res.groupby(['과제', '호텔'], sort=False):
     g = g.copy(); g['단순기준 대비 [95% CI]'] = g.apply(lambda r: f'{r["단순기준 대비"]:+.4f} [{r["CI하한"]:+.4f}, {r["CI상한"]:+.4f}]', axis=1)

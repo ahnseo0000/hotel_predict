@@ -134,4 +134,4 @@ for nm, msk in [('포르투갈', prt_te), ('그 외', ~prt_te)]:
     t = pd.DataFrame({'p': p[msk], 'y': y[2][msk], 'q': q}).groupby('q', observed=True).agg(예측=('p', 'mean'), 실제=('y', 'mean'), n=('y', 'size'))
     print(nm); print(t.round(3).to_string())
 
-pd.DataFrame(rows, columns=['설정', '평가 집단', 'AUC']).round(4).to_csv('cancel_country_check.csv', index=False, encoding='utf-8-sig')
+pd.DataFrame(rows, columns=['설정', '평가 집단', 'AUC']).round(4).to_csv('results/cancel_country_check.csv', index=False, encoding='utf-8-sig')

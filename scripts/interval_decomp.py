@@ -88,5 +88,5 @@ print('===== A) 예측 구간 실제 포함률 (구간 1, 2 = 112일, 이전 구
 print(cov.round(3).to_string(index=False))
 print('\n===== B) 수요 분해 (바깥 168일 평균) =====')
 print(dec.round(3).T.to_string(header=False))
-cov.round(4).to_csv('interval_coverage.csv', index=False, encoding='utf-8-sig')
-dec.round(4).to_csv('demand_decomposition.csv', index=False, encoding='utf-8-sig')
+cov.round(4).to_csv('results/interval_coverage.csv', index=False, encoding='utf-8-sig')
+dec.round(4).to_csv('results/demand_decomposition.csv', index=False, encoding='utf-8-sig')

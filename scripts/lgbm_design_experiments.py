@@ -240,7 +240,7 @@ for task, S in STORE.items():
             a = S['ape'](h, p[h]); d1 = a - a_base; d2 = a - a_simple; c1 = boot_ci(d1); c2 = boot_ci(d2)
             out_rows.append({'과제': task, '호텔': h, '모델': name, 'MAPE': a.mean(), '기준(a) 대비': d1.mean(), 'CI(a) 하한': c1[0], 'CI(a) 상한': c1[1],
                              '단순(b) 대비': d2.mean(), 'CI(b) 하한': c2[0], 'CI(b) 상한': c2[1]})
-res = pd.DataFrame(out_rows); res.round(4).to_csv('lgbm_design_results.csv', index=False, encoding='utf-8-sig')
+res = pd.DataFrame(out_rows); res.round(4).to_csv('results/lgbm_design_results.csv', index=False, encoding='utf-8-sig')
 pd.set_option('display.width', 250)
 def verdict(lo, hi): return '구분 안 됨' if lo <= 0 <= hi else ('개선' if hi < 0 else '악화')
 for (task, h), g in res.groupby(['과제', '호텔'], sort=False):

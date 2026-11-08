@@ -103,4 +103,4 @@ th2v, _ = best(e2v); th2t, nb2t = best(e2t)
 print(f'AUC {roc_auc_score(e2t.y, e2t.p):.4f}, 예약수 {len(e2t):,}, 손실 매출 {e2t.lost.sum():,.0f}')
 print(f'test 최적 임계값 {th2t} 순효과 {nb2t:,.0f} / valid 임계값 {th2v} 적용 순효과 {effect(e2t, th2v)[0]:,.0f} / 전수 대응 {(S0 * e2t.lost).sum() - C0 * len(e2t):,.0f}')
 
-t1.round(4).to_csv('cancel_country_impact.csv', index=False, encoding='utf-8-sig')
+t1.round(4).to_csv('results/cancel_country_impact.csv', index=False, encoding='utf-8-sig')

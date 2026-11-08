@@ -113,7 +113,7 @@ for hotel in ['City Hotel', 'Resort Hotel']:
                              'MAPE': mape(y, p), 'WAPE': wape(y, p)})
             print(f'{TARGET} {hotel} H={H} asof={asof} 완료', flush=True)
 res = pd.DataFrame(rows)
-res.round(4).to_csv(f'horizon_{TARGET}_results.csv', index=False, encoding='utf-8-sig')
+res.round(4).to_csv(f'results/horizon_{TARGET}_results.csv', index=False, encoding='utf-8-sig')
 for hotel in ['City', 'Resort']:
     for dfn in ('asof', 'legacy'):
         pv = res[(res.hotel == hotel) & (res['OTB정의'] == dfn)].pivot(index='모델', columns='H', values='MAPE')

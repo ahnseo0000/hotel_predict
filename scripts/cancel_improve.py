@@ -176,5 +176,5 @@ for v in ['기본', '+ 추가 피처']:
 cal = pd.DataFrame(cal_rows); print(cal.round(4).to_string(index=False))
 print(f'\n참고: 전수 대응 {net(np.ones(len(yt), bool)):,.0f}, test에서 임계값을 고른 최적(기본 모델) {max(net(preds["기본"][1] >= t) for t in ths):,.0f}')
 
-res.round(4).to_csv('cancel_improve_results.csv', index=False, encoding='utf-8-sig')
-cal.round(4).to_csv('cancel_calibration_results.csv', index=False, encoding='utf-8-sig')
+res.round(4).to_csv('results/cancel_improve_results.csv', index=False, encoding='utf-8-sig')
+cal.round(4).to_csv('results/cancel_calibration_results.csv', index=False, encoding='utf-8-sig')
